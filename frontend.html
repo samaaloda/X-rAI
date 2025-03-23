@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XR-AI - X-ray Fracture Detection</title>
+    <style>
+        :root {
+            --primary: #00c2cb;
+            --secondary: #4a6bff;
+            --dark: #121212;
+            --light: #f5f7ff;
+            --accent: #00e5ff;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--dark);
+            color: var(--light);
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        header {
+            background-color: var(--dark);
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+        }
+        
+        .logo {
+            font-size: 4.5rem;
+            font-weight: 700;
+            margin: 0;
+            color: white;
+            letter-spacing: 3px;
+        }
+        
+        .tagline {
+            font-size: 1.4rem;
+            margin: 0.5rem 0 0;
+            opacity: 0.9;
+        }
+        
+        main {
+            padding: 2rem 0;
+        }
+        
+        .upload-section {
+            width: 100%;
+            padding: 0 1rem;
+        }
+        
+        .upload-container {
+            background-color: #1e1e1e;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            margin-bottom: 2rem;
+            border: 1px solid #333;
+            height: 100%;
+        }
+        
+        h2 {
+            color: var(--primary);
+            margin-top: 0;
+        }
+        
+        .upload-description {
+            margin-bottom: 2rem;
+            color: #ccc;
+        }
+        
+        .upload-area {
+            border: 3px dashed #444;
+            border-radius: 8px;
+            padding: 3rem 2rem;
+            text-align: center;
+            margin: 2rem 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+       /* .upload-area:hover {
+            border-color: var(--primary);
+            background-color: rgba(0, 194, 203, 0.1);
+        }*/
+        
+        .upload-text {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: #fff;
+        }
+        
+        .file-info {
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+        
+        #file-input {
+            display: none;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .btn {
+            background-color: var(--primary);
+            color: #121212;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            font-size: 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        
+        .btn:hover {
+            background-color: var(--accent);
+            transform: translateY(-2px);
+        }
+        
+        .btn:disabled {
+            background-color: #444;
+            color: #777;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .file-list {
+            margin-top: 2rem;
+        }
+        
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #2a2a2a;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .file-name {
+            font-weight: 500;
+            color: #fff;
+        }
+        
+        .file-size {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+        
+        .status {
+            font-size: 0.9rem;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+        }
+        
+        .status.pending {
+            background-color: #332c00;
+            color: #ffda6a;
+        }
+        
+        .status.success {
+            background-color: #002f15;
+            color: #42e188;
+        }
+        
+        footer {
+            background-color: #0a0a0a;
+            color: white;
+            padding: 1.5rem 0;
+            margin-top: 2rem;
+            text-align: center;
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        
+        .footer-logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Chat Widget Styles */
+        .chat-widget {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 1000;
+        }
+        
+        .chat-button {
+            width: 60px;
+            height: 60px;
+            background-color: var(--primary);
+            border-radius: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            color: #121212;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+        
+        .chat-button:hover {
+            background-color: var(--accent);
+            transform: translateY(-2px);
+        }
+        
+        .chat-container {
+            position: absolute;
+            bottom: 80px;
+            right: 0;
+            width: 320px;
+            height: 400px;
+            background-color: #1e1e1e;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            border: 1px solid #333;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .chat-container.active {
+            display: flex;
+        }
+        
+        .chat-header {
+            padding: 1rem;
+            border-bottom: 1px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .chat-title-container {
+            display: flex;
+            align-items: center;
+        }
+        
+        .chat-online-indicator {
+            width: 10px;
+            height: 10px;
+            background-color: #42e188;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        
+        .chat-title {
+            margin: 0;
+            font-size: 1.2rem;
+            color: white;
+        }
+        
+        .chat-close {
+            cursor: pointer;
+            color: #aaa;
+            font-size: 1.2rem;
+        }
+        
+        .chat-close:hover {
+            color: #fff;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .message {
+            max-width: 80%;
+            padding: 0.8rem 1rem;
+            border-radius: 1.2rem;
+            margin-bottom: 1rem;
+            word-wrap: break-word;
+            position: relative;
+        }
+        
+        .message-bot {
+            background-color: #2a2a2a;
+            align-self: flex-start;
+            border-bottom-left-radius: 0.2rem;
+        }
+        
+        .message-user {
+            background-color: var(--primary);
+            color: #121212;
+            align-self: flex-end;
+            border-bottom-right-radius: 0.2rem;
+        }
+        
+        .chat-input-container {
+            padding: 1rem;
+            border-top: 1px solid #333;
+            display: flex;
+        }
+        
+        .chat-input {
+            flex: 1;
+            padding: 0.8rem 1rem;
+            border: none;
+            border-radius: 1.5rem;
+            background-color: #2a2a2a;
+            color: white;
+            font-size: 0.9rem;
+        }
+        
+        .chat-input:focus {
+            outline: none;
+        }
+        
+        .chat-send-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            border: none;
+            margin-left: 0.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #121212;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 768px) {
+            .logo {
+                font-size: 3.5rem;
+            }
+            
+            .tagline {
+                font-size: 1.1rem;
+            }
+            
+            .chat-widget {
+                bottom: 20px;
+                right: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1 class="logo">XR-AI</h1>
+            <p class="tagline">Advanced X-ray Fracture Detection</p>
+        </div>
+    </header>
+    
+    <main class="container">
+        <section class="upload-section">
+            <div class="upload-container">
+                <h2>Upload X-ray Images</h2>
+                <p class="upload-description">Upload your X-ray images in PDF format for AI-powered fracture detection and analysis.</p>
+                
+                <div class="upload-area" id="drop-area">
+                    <div class="upload-text">Drag and drop your X-ray PDFs here</div>
+                    <div class="file-info">or click to browse (Max size: 10MB)</div>
+                    <input type="file" id="file-input" accept=".pdf" multiple />
+                </div>
+                
+                <div class="text-center">
+                    <button class="btn" id="upload-btn" disabled>Upload Files</button>
+                </div>
+                
+                <div class="file-list" id="file-list">
+                    <!-- File items will be added here via JavaScript -->
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <!-- Chat Widget -->
+    <div class="chat-widget">
+        <div class="chat-button" id="chat-button">Chat</div>
+        
+        <div class="chat-container" id="chat-container">
+            <div class="chat-header">
+                <div class="chat-title-container">
+                    <div class="chat-online-indicator"></div>
+                    <h3 class="chat-title">XR-AI Assistant</h3>
+                </div>
+                <div class="chat-close" id="chat-close">×</div>
+            </div>
+            
+            <div class="chat-messages">
+                <div class="message message-bot">
+                    Hello!
+                </div>
+            </div>
+            
+            <div class="chat-input-container">
+                <input type="text" class="chat-input" placeholder="Type your message here...">
+                <button class="chat-send-btn">→</button>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">XR-AI</div>
+                <div>© 2025 XR-AI Medical Imaging. All rights reserved.</div>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const dropArea = document.getElementById('drop-area');
+            const fileInput = document.getElementById('file-input');
+            const uploadBtn = document.getElementById('upload-btn');
+            const fileList = document.getElementById('file-list');
+            
+            // Chat widget functionality
+            const chatButton = document.getElementById('chat-button');
+            const chatContainer = document.getElementById('chat-container');
+            const chatClose = document.getElementById('chat-close');
+            const chatInput = document.querySelector('.chat-input');
+            const chatSendBtn = document.querySelector('.chat-send-btn');
+            
+            chatButton.addEventListener('click', () => {
+                chatContainer.classList.add('active');
+            });
+            
+            chatClose.addEventListener('click', () => {
+                chatContainer.classList.remove('active');
+            });
+            
+            function sendMessage() {
+                const message = chatInput.value.trim();
+                if (message) {
+                    const chatMessages = document.querySelector('.chat-messages');
+                    
+                    // Add user message
+                    const userMessage = document.createElement('div');
+                    userMessage.className = 'message message-user';
+                    userMessage.textContent = message;
+                    chatMessages.appendChild(userMessage);
+                    
+                    // Clear input
+                    chatInput.value = '';
+                    
+                    // Auto scroll to bottom
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                    
+                    // Simulate bot response
+                    setTimeout(() => {
+                        const botMessage = document.createElement('div');
+                        botMessage.className = 'message message-bot';
+                        botMessage.textContent = 'blah blah.';
+                        chatMessages.appendChild(botMessage);
+                        
+                        // Auto scroll to bottom
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    }, 1000);
+                }
+            }
+            
+            chatSendBtn.addEventListener('click', sendMessage);
+            
+            chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+            
+            let files = [];
+            
+            // Open file browser when clicking on drop area
+            dropArea.addEventListener('click', () => {
+                fileInput.click();
+            });
+            
+            // Handle file selection from file browser
+            fileInput.addEventListener('change', (e) => {
+                handleFiles(e.target.files);
+            });
+            
+            // Prevent default drag behaviors
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            // Highlight drop area when file is dragged over it
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropArea.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, unhighlight, false);
+            });
+            
+            function highlight() {
+                dropArea.style.borderColor = 'var(--primary)';
+                dropArea.style.backgroundColor = 'rgba(0, 194, 203, 0.1)';
+            }
+            
+            function unhighlight() {
+                dropArea.style.borderColor = '#444';
+                dropArea.style.backgroundColor = 'transparent';
+            }
+            
+            // Handle dropped files
+            dropArea.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const newFiles = dt.files;
+                handleFiles(newFiles);
+            });
+            
+            function handleFiles(newFiles) {
+                const validFiles = Array.from(newFiles).filter(file => {
+                    // Check if file is a PDF
+                    return file.type === 'application/pdf';
+                });
+                
+                if (validFiles.length === 0) {
+                    alert('Please upload PDF files only.');
+                    return;
+                }
+                
+                // Add valid files to our files array
+                files = [...files, ...validFiles];
+                
+                // Enable upload button if we have files
+                if (files.length > 0) {
+                    uploadBtn.disabled = false;
+                }
+                
+                // Update UI with file list
+                updateFileList();
+            }
+            
+            function updateFileList() {
+                // Clear the file list
+                fileList.innerHTML = '';
+                
+                // Add each file to the list
+                files.forEach((file, index) => {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item';
+                    
+                    const fileInfo = document.createElement('div');
+                    
+                    const fileName = document.createElement('div');
+                    fileName.className = 'file-name';
+                    fileName.textContent = file.name;
+                    
+                    const fileSize = document.createElement('div');
+                    fileSize.className = 'file-size';
+                    fileSize.textContent = formatFileSize(file.size);
+                    
+                    fileInfo.appendChild(fileName);
+                    fileInfo.appendChild(fileSize);
+                    
+                    const status = document.createElement('div');
+                    status.className = 'status pending';
+                    status.textContent = 'Pending';
+                    
+                    const removeBtn = document.createElement('button');
+                    removeBtn.textContent = 'Remove';
+                    removeBtn.className = 'btn';
+                    removeBtn.style.backgroundColor = '#e63946';
+                    removeBtn.style.marginLeft = '10px';
+                    
+                    // Add event listener to remove button
+                    removeBtn.addEventListener('click', () => {
+                        files.splice(index, 1);
+                        updateFileList();
+                        if (files.length === 0) {
+                            uploadBtn.disabled = true;
+                        }
+                    });
+                    
+                    const actions = document.createElement('div');
+                    actions.style.display = 'flex';
+                    actions.style.alignItems = 'center';
+                    actions.appendChild(status);
+                    actions.appendChild(removeBtn);
+                    
+                    fileItem.appendChild(fileInfo);
+                    fileItem.appendChild(actions);
+                    
+                    fileList.appendChild(fileItem);
+                });
+            }
+            
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+            
+            // Handle file upload
+            uploadBtn.addEventListener('click', () => {
+                const fileItems = fileList.querySelectorAll('.file-item');
+                
+                fileItems.forEach((fileItem, index) => {
+                    const statusElement = fileItem.querySelector('.status');
+                    statusElement.textContent = 'Uploading...';
+                    
+                    // Simulate upload delay
+                    setTimeout(() => {
+                        statusElement.textContent = 'Success';
+                        statusElement.className = 'status success';
+                    }, 1500 + (index * 500)); // Stagger the uploads for a more realistic feel
+                });
+                
+                // Add a notification in the chat when files are uploaded
+                setTimeout(() => {
+                    if (!chatContainer.classList.contains('active')) {
+                        chatContainer.classList.add('active');
+                    }
+                    
+                    const chatMessages = document.querySelector('.chat-messages');
+                    const message = document.createElement('div');
+                    message.className = 'message message-bot';
+                    message.textContent = 'I see you\'ve uploaded some files. The analysis will be completed shortly.';
+                    chatMessages.appendChild(message);
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }, 2000);
+            });
+        });
+    </script>
+</body>
+</html>
