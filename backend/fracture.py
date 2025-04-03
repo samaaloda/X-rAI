@@ -11,7 +11,7 @@ from typing import List
 import uvicorn
 import io
 
-MODEL_URL = "https://your-bucket-name.s3.amazonaws.com/fracture_classes.h5"
+MODEL_URL = "https://x-rai-store.s3.amazonaws.com/fracture_classes.h5"
 
 def load_model_from_url(url):
     print("Loading model from S3...")
