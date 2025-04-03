@@ -1,26 +1,47 @@
 import React, { useState } from 'react';
 import './App.css';
 
-const getGeminiResponse = async (transcribedText) => {
+
+/**
+ * Handles Ollama AI API requests
+ * @param {string} transcribedText - The transcribed text to process
+ * @returns {Promise<string>} AI-generated response
+ */
+const getOllamaResponse = async (transcribedText) => {
   try {
-    // Call the backend's /gemini/ endpoint
-    const response = await fetch('http://localhost:5000/gemini/', {
+    console.log("Sending request to Ollama with llama2-7b model...");
+    
+    // Using the completion endpoint that matches Ollama's current API
+    const response = await fetch('http://localhost:11434/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ transcribed_text: transcribedText }),
+      body: JSON.stringify({
+        model: "gemma:2b",
+        prompt: `You are working with a radiologist who has extensive knowledge on bone fractures and detecting them on X-ray images.
+                 The radiologist asks: ${transcribedText}
+                 
+                 Please respond with a brief answer that:
+                 - Is well supported with science
+                 - Uses anatomical terms as much as possible
+                 - Always repeats what you understood of their prompt to ensure your response answers them well
+                 
+                 Keep the response limited to 7 sentences maximum.`,
+        stream: false
+      }),
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Error Response from Backend:', errorData);
-      throw new Error(`Backend request failed with status: ${response.status}`);
+      const errorText = await response.text().catch(() => 'Unknown error');
+      console.error(`Ollama API error (${response.status}):`, errorText);
+      throw new Error(`Ollama API request failed: ${response.status}`);
     }
 
     const data = await response.json();
-    return data.response; // Return the AI-generated response
+    console.log("Ollama response received:", data);
+    return data.response;
   } catch (error) {
-    console.error('Error fetching response from backend:', error);
-    throw error;
+    console.error('Error communicating with Ollama API:', error);
+    return "I encountered an error connecting to the Ollama API. Please make sure Ollama is running correctly.";
   }
 };
 
@@ -29,8 +50,8 @@ function App() {
   const [filePreviews, setFilePreviews] = useState([]); // State for image previews
   const [response, setResponse] = useState(null);
   const [chatOpen, setChatOpen] = useState(false);
-  const [messages, setMessages] = useState([]);
-  const [inputMessage, setInputMessage] = useState("");
+  const [messages, setMessages] = useState([]); // State for chat messages
+  const [inputMessage, setInputMessage] = useState(""); // State for user input in the chat
   const [isLoading, setIsLoading] = useState(false); // Loading state for chatbot
 
   const handleFileChange = (e) => {
@@ -85,8 +106,11 @@ function App() {
       setIsLoading(true); // Show loading indicator
 
       try {
-        // Get the response from the backend
-        const botResponse = await getGeminiResponse(userMessage);
+        console.log("Sending message to Ollama:", userMessage);
+
+        // Get the response from the Ollama API
+        const botResponse = await getOllamaResponse(userMessage);
+        console.log("Received response from Ollama:", botResponse);
 
         // Add the AI's response to the chat
         setMessages((prevMessages) => [
@@ -94,7 +118,7 @@ function App() {
           { sender: "bot", text: botResponse },
         ]);
       } catch (error) {
-        console.error('Error communicating with backend:', error);
+        console.error('Error in handleSendMessage:', error);
         setMessages((prevMessages) => [
           ...prevMessages,
           { sender: "bot", text: "Sorry, I couldn't process your request. Please try again later." },
@@ -147,7 +171,7 @@ function App() {
           allowFullScreen
           mozallowfullscreen="true"
           webkitallowfullscreen="true"
-          onMouseWheel=""
+          onWheel={() => {}} // Replace onMouseWheel with onWheel
           tabIndex="-1"
           title="Human Skeleton 3D Model"
         ></iframe>
