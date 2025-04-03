@@ -11,10 +11,8 @@ from typing import List
 import uvicorn
 import io
 
-# URL to the model file hosted on S3
 MODEL_URL = "https://your-bucket-name.s3.amazonaws.com/fracture_classes.h5"
 
-# Load the model directly from the S3 URL
 def load_model_from_url(url):
     print("Loading model from S3...")
     response = requests.get(url, stream=True)
@@ -26,7 +24,6 @@ def load_model_from_url(url):
     else:
         raise Exception(f"Failed to load model. Status code: {response.status_code}")
 
-# Load the model into memory
 model = load_model_from_url(MODEL_URL)
 
 class_names = [
@@ -42,10 +39,8 @@ class_names = [
     'Spiral Fracture'
 ]
 
-# Initialize FastAPI app
 app = FastAPI()
 
-# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -54,7 +49,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Ensure uploads directory exists
 if not os.path.exists('./uploads'):
     os.makedirs('./uploads')
 
@@ -120,11 +114,6 @@ def predict_image(processed_img, model, class_names):
     return predicted_class, confidence
 
 def calculate_laplacian_variance(img_path):
-    """
-    Calculate the Laplacian variance of an image to determine its sharpness.
-    :param img_path: Path to the image file.
-    :return: Laplacian variance of the image.
-    """
     img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
     if img is None:
         raise ValueError(f"Unable to read the image file at {img_path}.")
