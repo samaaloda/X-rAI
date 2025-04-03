@@ -4,10 +4,12 @@ import cv2
 from fastapi.responses import JSONResponse
 import numpy as np
 import tensorflow as tf
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from typing import List
 import uvicorn
 
+# Load the model and class names
 model = tf.keras.models.load_model('../fracture_classes.h5')
 
 class_names = [
@@ -23,8 +25,10 @@ class_names = [
     'Spiral Fracture'
 ]
 
+# Initialize FastAPI app
 app = FastAPI()
 
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -33,6 +37,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Ensure uploads directory exists
 if not os.path.exists('./uploads'):
     os.makedirs('./uploads')
 
@@ -41,18 +46,45 @@ def read_root():
     return {"message": "Welcome to the fracture prediction API"}
 
 @app.post("/upload/")
-async def upload_image(image: UploadFile = File(...)):
+async def upload_images(images: List[UploadFile] = File(...)):
     try:
-        file_path = f"./uploads/{image.filename}"
-        print(f"Saving image to: {file_path}")
-        with open(file_path, "wb") as buffer:
-            contents = await image.read()
-            buffer.write(contents)
-        processed_img = preprocess_image(file_path)
+        if not images:
+            return JSONResponse(
+                content={"message": "No images were uploaded. Please upload at least one image."},
+                status_code=400
+            )
+
+        clear_image_path = None
+        max_laplacian_var = 0
+
+        for image in images:
+            file_path = f"./uploads/{image.filename}"
+            print(f"Saving image to: {file_path}")
+            with open(file_path, "wb") as buffer:
+                contents = await image.read()
+                buffer.write(contents)
+
+            # Calculate Laplacian variance for the image
+            laplacian_var = calculate_laplacian_variance(file_path)
+            print(f"Laplacian variance for {image.filename}: {laplacian_var}")
+
+            # Update the clearest image if this one is clearer
+            if laplacian_var > max_laplacian_var:
+                max_laplacian_var = laplacian_var
+                clear_image_path = file_path
+
+        if clear_image_path is None:
+            return JSONResponse(
+                content={"message": "All uploaded images are too blurry. Please upload clearer images."},
+                status_code=400
+            )
+
+        # Process the clearest image
+        processed_img = preprocess_image(clear_image_path)
         predicted_class, confidence = predict_image(processed_img, model, class_names)
         return {
             "message": "File uploaded and processed successfully",
-            "filename": image.filename,
+            "clearest_image": clear_image_path.split("/")[-1],
             "predicted_class": predicted_class,
             "confidence": float(confidence)
         }
@@ -75,6 +107,17 @@ def predict_image(processed_img, model, class_names):
     predicted_class = class_names[np.argmax(prediction)]
     confidence = np.max(prediction)
     return predicted_class, confidence
+
+def calculate_laplacian_variance(img_path):
+    """
+    Calculate the Laplacian variance of an image to determine its sharpness.
+    :param img_path: Path to the image file.
+    :return: Laplacian variance of the image.
+    """
+    img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+    if img is None:
+        raise ValueError(f"Unable to read the image file at {img_path}.")
+    return cv2.Laplacian(img, cv2.CV_64F).var()
 
 if __name__ == "__main__":
     uvicorn.run("fracture:app", host="0.0.0.0", port=5000, reload=True)
