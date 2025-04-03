@@ -1,6 +1,7 @@
 import os
 import shutil
 import cv2
+import requests
 from fastapi.responses import JSONResponse
 import numpy as np
 import tensorflow as tf
@@ -8,9 +9,25 @@ from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 import uvicorn
+import io
 
-# Load the model and class names
-model = tf.keras.models.load_model('../fracture_classes.h5')
+# URL to the model file hosted on S3
+MODEL_URL = "https://your-bucket-name.s3.amazonaws.com/fracture_classes.h5"
+
+# Load the model directly from the S3 URL
+def load_model_from_url(url):
+    print("Loading model from S3...")
+    response = requests.get(url, stream=True)
+    if response.status_code == 200:
+        model_bytes = io.BytesIO(response.content)
+        model = tf.keras.models.load_model(model_bytes)
+        print("Model loaded successfully.")
+        return model
+    else:
+        raise Exception(f"Failed to load model. Status code: {response.status_code}")
+
+# Load the model into memory
+model = load_model_from_url(MODEL_URL)
 
 class_names = [
     'Avulsion fracture', 
