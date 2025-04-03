@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import './App.css';
 
-
 /**
  * Handles Ollama AI API requests
  * @param {string} transcribedText - The transcribed text to process
@@ -9,7 +8,7 @@ import './App.css';
  */
 const getOllamaResponse = async (transcribedText) => {
   try {
-    console.log("Sending request to Ollama with llama2-7b model...");
+    console.log("Sending request to Ollama with gemma:2b model...");
     
     // Using the completion endpoint that matches Ollama's current API
     const response = await fetch('http://localhost:11434/api/generate', {
@@ -131,51 +130,68 @@ function App() {
 
   return (
     <div className="App">
-      <h1>Upload X-ray Images for Analysis</h1>
+      <div className="app-header">
+        <h1>
+          <span className="header-x-r">X-R</span>
+          <span className="header-ai">AI</span>
+        </h1>
+        <h2 className="header-tagline">EMPOWERING RADIOLOGISTS</h2>
+      </div>
 
-      <input
-        type="file"
-        accept=".png, .jpg, .jpeg"
-        multiple // Allow multiple file selection
-        onChange={handleFileChange}
-        className="file-input"
-      />
+      {/* Row container for upload section and 3D model */}
+      <div className="row-container">
+        <div className="upload-section">
+          <h3>Upload X-ray Images for Analysis</h3>
 
-      {filePreviews.length > 0 && (
-        <div className="image-preview-container">
-          <h3>Selected Images:</h3>
-          <div className="image-preview-grid">
-            {filePreviews.map((preview, index) => (
-              <img key={index} src={preview} alt={`Preview ${index + 1}`} className="image-preview" />
-            ))}
-          </div>
+          <input
+            type="file"
+            accept=".png, .jpg, .jpeg"
+            multiple // Allow multiple file selection
+            onChange={handleFileChange}
+            className="file-input"
+          />
+
+          {filePreviews.length > 0 && (
+            <div className="image-preview-container">
+              <h3>Selected Images:</h3>
+              <div className="image-preview-grid">
+                {filePreviews.map((preview, index) => (
+                  <img key={index} src={preview} alt={`Preview ${index + 1}`} className="image-preview" />
+                ))}
+              </div>
+            </div>
+          )}
+
+          <button onClick={handleUpload} disabled={files.length === 0} className="upload-button">
+            Upload Files
+          </button>
         </div>
-      )}
 
-      <button onClick={handleUpload} disabled={files.length === 0} className="upload-button">
-        Upload Files
-      </button>
+        {/* Embed Sketchfab 3D Model */}
+        <div className="sketchfab-container">
+          <h3>Interactive 3D Skeleton Model</h3>
+          <iframe
+            className="sketchfab-model"
+            src="https://sketchfab.com/models/337822a2d4bb43358c653dcf425e28ec/embed?autostart=0&transparent=1&ui_infos=0&ui_start=0&scrollwheel=1"
+            allowFullScreen
+            mozallowfullscreen="true"
+            webkitallowfullscreen="true"
+            onWheel={() => {}} // Replace onMouseWheel with onWheel
+            tabIndex="-1"
+            title="Human Skeleton 3D Model"
+          ></iframe>
+        </div>
+      </div>
 
       {response && (
         <div className="response-container">
-          <h3>Backend Response:</h3>
-          <pre>{JSON.stringify(response, null, 2)}</pre>
+          <h3>Analysis Results:</h3>
+          <div className="analysis-card">
+            <p><strong>Predicted Class:</strong> {response.predicted_class}</p>
+            <p><strong>Confidence:</strong> {(response.confidence * 100).toFixed(2)}%</p>
+          </div>
         </div>
       )}
-
-      {/* Embed Sketchfab 3D Model */}
-      <div className="sketchfab-container">
-        <iframe
-          className="sketchfab-model"
-          src="https://sketchfab.com/models/337822a2d4bb43358c653dcf425e28ec/embed?autostart=0&transparent=1&ui_infos=0&ui_start=0&scrollwheel=1"
-          allowFullScreen
-          mozallowfullscreen="true"
-          webkitallowfullscreen="true"
-          onWheel={() => {}} // Replace onMouseWheel with onWheel
-          tabIndex="-1"
-          title="Human Skeleton 3D Model"
-        ></iframe>
-      </div>
 
       {/* Chat Widget */}
       <div className="chat-widget">
@@ -187,13 +203,18 @@ function App() {
             <div className="chat-header">
               <div className="chat-title-container">
                 <div className="chat-online-indicator"></div>
-                <h3 className="chat-title">Chatbot</h3>
+                <h3 className="chat-title">X-RAI Assistant</h3>
               </div>
               <div className="chat-close" onClick={() => setChatOpen(false)}>
                 ✖
               </div>
             </div>
             <div className="chat-messages">
+              {messages.length === 0 && (
+                <div className="welcome-message">
+                  Welcome to X-RAI! Ask me anything about bone fractures and X-ray analysis.
+                </div>
+              )}
               {messages.map((message, index) => (
                 <div
                   key={index}
@@ -212,6 +233,7 @@ function App() {
                 placeholder="Type a message..."
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' ? handleSendMessage() : null}
               />
               <button
                 className="chat-send-btn"

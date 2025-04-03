@@ -59,16 +59,12 @@ async def upload_images(images: List[UploadFile] = File(...)):
 
         for image in images:
             file_path = f"./uploads/{image.filename}"
-            print(f"Saving image to: {file_path}")
             with open(file_path, "wb") as buffer:
                 contents = await image.read()
                 buffer.write(contents)
 
-            # Calculate Laplacian variance for the image
             laplacian_var = calculate_laplacian_variance(file_path)
-            print(f"Laplacian variance for {image.filename}: {laplacian_var}")
 
-            # Update the clearest image if this one is clearer
             if laplacian_var > max_laplacian_var:
                 max_laplacian_var = laplacian_var
                 clear_image_path = file_path
@@ -79,7 +75,6 @@ async def upload_images(images: List[UploadFile] = File(...)):
                 status_code=400
             )
 
-        # Process the clearest image
         processed_img = preprocess_image(clear_image_path)
         predicted_class, confidence = predict_image(processed_img, model, class_names)
         return {
@@ -89,7 +84,6 @@ async def upload_images(images: List[UploadFile] = File(...)):
             "confidence": float(confidence)
         }
     except Exception as e:
-        print(f"Error: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
 def preprocess_image(img_path):
