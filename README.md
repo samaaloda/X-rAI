@@ -24,5 +24,4 @@ X-rAI is an intelligent diagnostic assistant that detects bone fractures from X-
 
 ---
 
-## 📂 Project Structure
 
