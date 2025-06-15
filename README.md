@@ -19,8 +19,8 @@ X-rAI is an intelligent diagnostic assistant that detects bone fractures from X-
 - **Frontend:** React.js (with Tailwind CSS or custom UI components)  
 - **Backend:** Python (FastAPI)  
 - **Model Hosting:** AWS S3  
-- **Model Framework:** TensorFlow or PyTorch (specify below)  
-- **Deployment (optional):** Render / Vercel / Heroku  
+- **Model Framework:** TensorFlow 
+- **Deployment:** Render 
 
 ---
 
