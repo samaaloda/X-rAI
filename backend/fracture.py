@@ -116,5 +116,7 @@ def calculate_laplacian_variance(img_path):
         raise ValueError(f"Unable to read the image file at {img_path}.")
     return cv2.Laplacian(img, cv2.CV_64F).var()
 
+
 if __name__ == "__main__":
-    uvicorn.run("fracture:app", host="0.0.0.0", port=5000, reload=True)
+    port = int(os.environ.get("PORT", 8000))  
+    uvicorn.run("fracture:app", host="0.0.0.0", port=port)
