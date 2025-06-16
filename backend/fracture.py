@@ -14,9 +14,16 @@ bucket_name = 'x-rai-store'
 model_key = 'fracture_model.tflite'
 local_path = 'model.tflite'
 
-s3 = boto3.client('s3', region_name='us-east-2')
-s3.download_file(bucket_name, model_key, local_path)
+#only download the model if it doesn't exist
+if not os.path.exists(local_path):
+    print("Downloading model from S3...")
+    s3 = boto3.client('s3', region_name='us-east-2')
+    s3.download_file(bucket_name, model_key, local_path)
+    print("Model download complete.")
+else:
+    print("Model already exists. Skipping download.")
 
+#load the TFLite model
 tflite_interpreter = tf.lite.Interpreter(model_path=local_path)
 tflite_interpreter.allocate_tensors()
 input_details = tflite_interpreter.get_input_details()

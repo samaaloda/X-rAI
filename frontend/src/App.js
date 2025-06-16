@@ -75,11 +75,10 @@ function App() {
 
 
     try {
-      const response = await fetch('http://localhost:2000/upload/', {
-        method: 'POST',
-        body: formData,
+      const response = await fetch("https://x-rai-pz46.onrender.com/upload/", {
+      method: "POST",
+      body: formData,
       });
-
 
       if (!response.ok) {
         throw new Error('Failed to upload files');
