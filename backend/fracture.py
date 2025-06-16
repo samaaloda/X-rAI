@@ -13,27 +13,25 @@ import uvicorn
 bucket_name = 'x-rai-store'
 model_key = 'fracture_model.tflite'
 local_path = 'model.tflite'
-
-#only download the model if it doesn't exist
-if not os.path.exists(local_path):
-    print("Downloading model from S3...")
-    s3 = boto3.client('s3', region_name='us-east-2')
-    s3.download_file(bucket_name, model_key, local_path)
-    print("Model download complete.")
-else:
-    print("Model already exists. Skipping download.")
-
-#load the TFLite model
-tflite_interpreter = tf.lite.Interpreter(model_path=local_path)
-tflite_interpreter.allocate_tensors()
-input_details = tflite_interpreter.get_input_details()
-output_details = tflite_interpreter.get_output_details()
-
 class_names = [
     'Avulsion fracture', 'Comminuted fracture', 'Fracture Dislocation',
     'Greenstick fracture', 'Hairline Fracture', 'Impacted fracture',
     'Longitudinal fracture', 'Oblique fracture', 'Pathological fracture', 'Spiral Fracture'
 ]
+
+tflite_interpreter = None
+input_details = None
+output_details = None
+
+def load_interpreter():
+    global tflite_interpreter, input_details, output_details
+    if tflite_interpreter is None:
+        s3 = boto3.client('s3', region_name='us-east-2')
+        s3.download_file(bucket_name, model_key, local_path)
+        tflite_interpreter = tf.lite.Interpreter(model_path=local_path)
+        tflite_interpreter.allocate_tensors()
+        input_details = tflite_interpreter.get_input_details()
+        output_details = tflite_interpreter.get_output_details()
 
 app = FastAPI()
 
@@ -60,6 +58,8 @@ async def upload_images(images: List[UploadFile] = File(...)):
                 content={"message": "No images were uploaded. Please upload at least one image."},
                 status_code=400
             )
+
+        load_interpreter()
 
         clear_image_path = None
         max_laplacian_var = 0
