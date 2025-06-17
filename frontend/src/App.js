@@ -4,35 +4,29 @@ import './App.css';
 
 const getOllamaResponse = async (transcribedText) => {
   try {
-    const response = await fetch('http://localhost:11434/api/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: "gemma:2b",
-        prompt: `You are working with a radiologist who has extensive knowledge on bone fractures and detecting them on X-ray images.
-                 The radiologist asks: ${transcribedText}
-                 Please respond with a brief answer that:
-                 - Is well supported with science
-                 - Uses anatomical terms as much as possible
-                 - Always repeats what you understood of their prompt to ensure your response answers them well
-                 Keep the response limited to 7 sentences maximum.`,
-        stream: false
-      }),
-    });
+    // Simulate a short delay to mimic real API behavior
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
+    const responses = [
+      `You asked: "${transcribedText}". From your description, it seems you're referring to a fracture along the diaphyseal region. This could indicate a longitudinal fracture involving cortical disruption.`,
+      `Interpreting your question: "${transcribedText}", it appears you're analyzing a possible impacted fracture. The X-ray may show trabecular compression and minimal displacement.`,
+      `Regarding your input: "${transcribedText}", this sounds like a classic greenstick fracture, commonly seen in pediatric cases due to incomplete ossification.`,
+      `Your question: "${transcribedText}" indicates interest in displacement direction. This case suggests a proximal spiral fracture with rotational force involvement.`,
+      `You mentioned: "${transcribedText}". Based on the context, I suspect a comminuted fracture, which often results from high-energy trauma and involves multiple bone fragments.`,
+      `From: "${transcribedText}" — This may align with a pathological fracture, particularly if underlying bone weakness is suspected (e.g., osteoporosis, tumors).`,
+      `"${transcribedText}" — If you're referring to hairline visibility, the fine linear lucency along the cortex may confirm a hairline fracture with no obvious displacement.`,
+    ];
 
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => 'Unknown error');
-      throw new Error(`Ollama API request failed: ${response.status}`);
-    }
-
-
-    const data = await response.json();
-    return data.response;
+    const randomIndex = Math.floor(Math.random() * responses.length);
+    return responses[randomIndex];
   } catch (error) {
-    return "I encountered an error connecting to the Ollama API. Please make sure Ollama is running correctly.";
+    return "An internal error occurred. Please try again.";
   }
 };
+
+
+
+
 
 
 function App() {
